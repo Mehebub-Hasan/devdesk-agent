@@ -1,33 +1,20 @@
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-.Python
-
-# Virtual Environment
+# Python virtual environments
 venv/
+.venv/
+backend/venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Environment variables
 .env
 .env.local
 
-# Logs
-*.log
-
-# Jupyter
-.ipynb_checkpoints/
+# Temporary files
+uploads/
+temp/
 
 # IDE
 .vscode/
 .idea/
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Temporary files
-temp/
-uploads/
-
-# Database
-*.sqlite3
-*.db
