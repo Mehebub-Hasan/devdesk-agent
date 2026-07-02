@@ -5,6 +5,7 @@ from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from app.services.file_reader import read_text_file
 from app.services.chunker import chunk_text
+from app.services.embeddings import create_embeddings
 
 router = APIRouter(prefix="/files", tags=["Files"])
 
@@ -39,9 +40,12 @@ async def upload_file(file: UploadFile = File(...)):
 
     extracted_text = read_text_file(save_path)
     chunks = chunk_text(extracted_text)
+    embeddings = create_embeddings(chunks)
+
+    embedding_dimension = len(embeddings[0]) if embeddings else 0
 
     return {
-        "message": "File uploaded, text extracted, and chunks created successfully.",
+        "message": "File uploaded, text extracted, chunks created, and embeddings generated successfully.",
         "filename": filename,
         "file_extension": file_extension,
         "content_type": file.content_type,
@@ -49,6 +53,8 @@ async def upload_file(file: UploadFile = File(...)):
         "saved_path": str(save_path),
         "character_count": len(extracted_text),
         "chunk_count": len(chunks),
+        "embedding_count": len(embeddings),
+        "embedding_dimension": embedding_dimension,
         "text_preview": extracted_text[:500],
         "chunks_preview": chunks[:3],
     }
