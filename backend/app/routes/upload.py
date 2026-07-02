@@ -4,6 +4,7 @@ import shutil
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from app.services.file_reader import read_text_file
+from app.services.chunker import chunk_text
 
 router = APIRouter(prefix="/files", tags=["Files"])
 
@@ -37,14 +38,17 @@ async def upload_file(file: UploadFile = File(...)):
         await file.close()
 
     extracted_text = read_text_file(save_path)
+    chunks = chunk_text(extracted_text)
 
     return {
-        "message": "File uploaded and text extracted successfully.",
+        "message": "File uploaded, text extracted, and chunks created successfully.",
         "filename": filename,
         "file_extension": file_extension,
         "content_type": file.content_type,
         "size_bytes": save_path.stat().st_size,
         "saved_path": str(save_path),
         "character_count": len(extracted_text),
+        "chunk_count": len(chunks),
         "text_preview": extracted_text[:500],
+        "chunks_preview": chunks[:3],
     }
