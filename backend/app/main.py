@@ -1,10 +1,14 @@
 from fastapi import FastAPI
 
+from app.routes.upload import router as upload_router
+
 app = FastAPI(
     title="DevDesk Agent API",
     description="Backend API for DevDesk Agent",
     version="0.1.0",
 )
+
+app.include_router(upload_router)
 
 
 @app.get("/")
