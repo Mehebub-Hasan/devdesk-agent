@@ -3,6 +3,8 @@ import shutil
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
+from app.services.file_reader import read_text_file
+
 router = APIRouter(prefix="/files", tags=["Files"])
 
 UPLOAD_DIR = Path("uploads")
@@ -34,11 +36,15 @@ async def upload_file(file: UploadFile = File(...)):
     finally:
         await file.close()
 
+    extracted_text = read_text_file(save_path)
+
     return {
-        "message": "File uploaded successfully.",
+        "message": "File uploaded and text extracted successfully.",
         "filename": filename,
         "file_extension": file_extension,
         "content_type": file.content_type,
         "size_bytes": save_path.stat().st_size,
         "saved_path": str(save_path),
+        "character_count": len(extracted_text),
+        "text_preview": extracted_text[:500],
     }
