@@ -1,19 +1,14 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
 
+from app.models.schemas import SearchRequest
 from app.services.embeddings import create_embeddings
 from app.services.vector_store import vector_store
 
 router = APIRouter(prefix="/search", tags=["Search"])
 
 
-class SearchRequest(BaseModel):
-    query: str = Field(..., min_length=1)
-    top_k: int = Field(default=3, ge=1, le=10)
-
-
 @router.post("")
-def search_documents(request: SearchRequest):
+def search_documents(request: SearchRequest) -> dict:
     query = request.query.strip()
 
     if not query:

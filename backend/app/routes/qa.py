@@ -1,19 +1,14 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
 
+from app.models.schemas import QuestionRequest
 from app.services.embeddings import create_embeddings
 from app.services.vector_store import vector_store
 
 router = APIRouter(prefix="/qa", tags=["Question Answering"])
 
 
-class QuestionRequest(BaseModel):
-    question: str = Field(..., min_length=1)
-    top_k: int = Field(default=3, ge=1, le=5)
-
-
 @router.post("/ask")
-def ask_question(request: QuestionRequest):
+def ask_question(request: QuestionRequest) -> dict:
     question = request.question.strip()
 
     if not question:
