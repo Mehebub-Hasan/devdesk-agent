@@ -3,9 +3,10 @@ import shutil
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
-from app.services.file_reader import read_text_file
 from app.services.chunker import chunk_text
 from app.services.embeddings import create_embeddings
+from app.services.file_reader import read_text_file
+from app.services.vector_store import vector_store
 
 router = APIRouter(prefix="/files", tags=["Files"])
 
@@ -42,10 +43,16 @@ async def upload_file(file: UploadFile = File(...)):
     chunks = chunk_text(extracted_text)
     embeddings = create_embeddings(chunks)
 
+    stored_chunk_count = vector_store.add_documents(
+        chunks=chunks,
+        embeddings=embeddings,
+        filename=filename,
+    )
+
     embedding_dimension = len(embeddings[0]) if embeddings else 0
 
     return {
-        "message": "File uploaded, text extracted, chunks created, and embeddings generated successfully.",
+        "message": "File uploaded, processed, embedded, and stored successfully.",
         "filename": filename,
         "file_extension": file_extension,
         "content_type": file.content_type,
@@ -53,6 +60,7 @@ async def upload_file(file: UploadFile = File(...)):
         "saved_path": str(save_path),
         "character_count": len(extracted_text),
         "chunk_count": len(chunks),
+        "stored_chunk_count": stored_chunk_count,
         "embedding_count": len(embeddings),
         "embedding_dimension": embedding_dimension,
         "text_preview": extracted_text[:500],
