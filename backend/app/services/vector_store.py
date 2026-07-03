@@ -41,6 +41,30 @@ class InMemoryVectorStore:
 
         return len(chunks)
 
+    def get_stats(self) -> dict[str, Any]:
+        files = sorted({item["filename"] for item in self.metadata})
+
+        return {
+            "total_chunks": len(self.texts),
+            "total_embeddings": len(self.embeddings),
+            "total_files": len(files),
+            "files": files,
+        }
+
+    def clear(self) -> dict[str, Any]:
+        deleted_chunks = len(self.texts)
+        deleted_embeddings = len(self.embeddings)
+
+        self.embeddings.clear()
+        self.texts.clear()
+        self.metadata.clear()
+
+        return {
+            "message": "In-memory vector store cleared successfully.",
+            "deleted_chunks": deleted_chunks,
+            "deleted_embeddings": deleted_embeddings,
+        }
+
     def search(
         self,
         query_embedding: list[float],
