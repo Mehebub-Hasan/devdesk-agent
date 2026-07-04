@@ -1,0 +1,18 @@
+
+> frontend@0.1.0 dev
+> next dev -H 127.0.0.1 -p 3000
+
+▲ Next.js 16.2.10 (Turbopack)
+- Local:         http://127.0.0.1:3000
+- Network:       http://127.0.0.1:3000
+✓ Ready in 480ms
+Creating turbopack project { dir: 'E:\\devdesk-agent\\frontend', testMode: true }
+
+ GET / 200 in 329ms (next.js: 158ms, application-code: 171ms)
+ GET / 200 in 58ms (next.js: 12ms, application-code: 45ms)
+ GET / 200 in 67ms (next.js: 7ms, application-code: 60ms)
+ GET / 200 in 55ms (next.js: 6ms, application-code: 48ms)
+ GET / 200 in 279ms (next.js: 67ms, application-code: 212ms)
+ GET / 200 in 157ms (next.js: 12ms, application-code: 145ms)
+ GET / 200 in 93ms (next.js: 6ms, application-code: 87ms)
+ GET / 200 in 95ms (next.js: 42ms, application-code: 52ms)
