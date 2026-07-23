@@ -1,9 +1,10 @@
 from pathlib import Path
+from uuid import uuid4
 import shutil
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
-from app.services.chunker import chunk_text
+from app.services.chunker import chunk_text_with_offsets
 from app.services.embeddings import create_embeddings
 from app.services.file_reader import read_text_file
 from app.services.vector_store import vector_store
@@ -40,29 +41,38 @@ async def upload_file(file: UploadFile = File(...)):
         await file.close()
 
     extracted_text = read_text_file(save_path)
-    chunks = chunk_text(extracted_text)
-    embeddings = create_embeddings(chunks)
+
+    # chunk_records carry each chunk's text plus its char_start/char_end offsets
+    # into extracted_text, so citations can point at the exact source span.
+    chunk_records = chunk_text_with_offsets(extracted_text)
+    chunk_texts = [record["text"] for record in chunk_records]
+    embeddings = create_embeddings(chunk_texts)
+
+    # One stable id per uploaded file, shared by all of its chunks.
+    doc_id = str(uuid4())
 
     stored_chunk_count = vector_store.add_documents(
-        chunks=chunks,
-        embeddings=embeddings,
+        doc_id=doc_id,
         filename=filename,
+        chunk_records=chunk_records,
+        embeddings=embeddings,
     )
 
     embedding_dimension = len(embeddings[0]) if embeddings else 0
 
     return {
         "message": "File uploaded, processed, embedded, and stored successfully.",
+        "doc_id": doc_id,
         "filename": filename,
         "file_extension": file_extension,
         "content_type": file.content_type,
         "size_bytes": save_path.stat().st_size,
         "saved_path": str(save_path),
         "character_count": len(extracted_text),
-        "chunk_count": len(chunks),
+        "chunk_count": len(chunk_texts),
         "stored_chunk_count": stored_chunk_count,
         "embedding_count": len(embeddings),
         "embedding_dimension": embedding_dimension,
         "text_preview": extracted_text[:500],
-        "chunks_preview": chunks[:3],
+        "chunks_preview": chunk_texts[:3],
     }

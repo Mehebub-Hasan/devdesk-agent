@@ -19,6 +19,9 @@ backend/.env
 uploads/
 temp/
 
+# Persisted vector store
+data/
+
 # IDE
 .vscode/
 .idea/

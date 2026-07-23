@@ -1,14 +1,21 @@
-def chunk_text(text: str, chunk_size: int = 800, overlap: int = 100) -> list[str]:
+def chunk_text_with_offsets(
+    text: str,
+    chunk_size: int = 800,
+    overlap: int = 100,
+) -> list[dict]:
     """
-    Split a long text into smaller overlapping chunks.
+    Split text into overlapping chunks, keeping each chunk's character offsets.
 
-    Args:
-        text: The full text content.
-        chunk_size: Maximum number of characters in each chunk.
-        overlap: Number of characters repeated between chunks.
+    Returns a list of dicts: {"text", "char_start", "char_end"}.
 
-    Returns:
-        A list of text chunks.
+    The offsets point back into the ORIGINAL `text`. We compute them here, while
+    we still know exactly where each window starts, rather than searching for the
+    chunk afterwards with str.find() — a search would land on the wrong copy when
+    the same text repeats in the document.
+
+    Because we .strip() each chunk (leading/trailing whitespace is noise for
+    embeddings), we shift char_start past any stripped leading whitespace so the
+    offsets still describe the text we actually stored.
     """
 
     if not text:
@@ -20,17 +27,52 @@ def chunk_text(text: str, chunk_size: int = 800, overlap: int = 100) -> list[str
     if overlap >= chunk_size:
         raise ValueError("overlap must be smaller than chunk_size")
 
-    chunks = []
+    records = []
     start = 0
     text_length = len(text)
 
     while start < text_length:
         end = start + chunk_size
-        chunk = text[start:end].strip()
+        raw = text[start:end]
+        stripped = raw.strip()
 
-        if chunk:
-            chunks.append(chunk)
+        if stripped:
+            # How many characters strip() removed from the front — this is how
+            # far the stored text sits inside the raw window.
+            leading = len(raw) - len(raw.lstrip())
+            char_start = start + leading
+            char_end = char_start + len(stripped)
+
+            records.append(
+                {
+                    "text": stripped,
+                    "char_start": char_start,
+                    "char_end": char_end,
+                }
+            )
 
         start = end - overlap
 
-    return chunks
+    return records
+
+
+def chunk_text(text: str, chunk_size: int = 800, overlap: int = 100) -> list[str]:
+    """
+    Split a long text into smaller overlapping chunks.
+
+    Thin wrapper over chunk_text_with_offsets() for callers that only need the
+    chunk strings and not their offsets.
+
+    Args:
+        text: The full text content.
+        chunk_size: Maximum number of characters in each chunk.
+        overlap: Number of characters repeated between chunks.
+
+    Returns:
+        A list of text chunks.
+    """
+
+    return [
+        record["text"]
+        for record in chunk_text_with_offsets(text, chunk_size, overlap)
+    ]

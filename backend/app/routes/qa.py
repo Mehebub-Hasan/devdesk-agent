@@ -53,10 +53,16 @@ def ask_question(request: QuestionRequest) -> dict:
 
         sources.append(
             {
+                # Existing fields the frontend reads — keep these names/shape.
                 "filename": metadata.get("filename"),
                 "chunk_index": metadata.get("chunk_index"),
                 "similarity_score": round(result.get("score", 0), 4),
                 "text_preview": text[:250],
+                # New citation fields, added alongside the originals.
+                "doc_id": metadata.get("doc_id"),
+                "char_start": metadata.get("char_start"),
+                "char_end": metadata.get("char_end"),
+                "page": metadata.get("page"),
             }
         )
 
