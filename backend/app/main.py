@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.config import DEEPSEEK_MODEL, deepseek_ready
 from app.routes.documents import router as documents_router
 from app.routes.qa import router as qa_router
 from app.routes.search import router as search_router
@@ -42,4 +43,6 @@ def health_check():
     return {
         "status": "ok",
         "service": "devdesk-agent-backend",
+        "use_deepseek": deepseek_ready(),
+        "deepseek_model": DEEPSEEK_MODEL,
     }

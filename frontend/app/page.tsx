@@ -1,5 +1,6 @@
 import BackendStatus from "@/src/components/BackendStatus";
 import FileUploader from "@/src/components/FileUploader";
+import QuestionAnswer from "@/src/components/QuestionAnswer";
 
 const features = [
   {
@@ -163,9 +164,12 @@ export default function Home() {
       </section>
 
       <section className="px-5 pb-8 sm:px-6">
-        <div className="mx-auto grid max-w-6xl gap-4 lg:grid-cols-[0.85fr_1.15fr]">
-          <BackendStatus />
-          <FileUploader />
+        <div className="mx-auto max-w-6xl space-y-4">
+          <div className="grid gap-4 lg:grid-cols-[0.85fr_1.15fr]">
+            <BackendStatus />
+            <FileUploader />
+          </div>
+          <QuestionAnswer />
         </div>
       </section>
 

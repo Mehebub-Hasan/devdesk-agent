@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 
 from app.models.schemas import QuestionRequest
 from app.services.embeddings import create_embeddings
+from app.services.llm import generate_answer_with_deepseek
 from app.services.vector_store import vector_store
 
 router = APIRouter(prefix="/qa", tags=["Question Answering"])
@@ -30,7 +31,19 @@ def ask_question(request: QuestionRequest) -> dict:
         }
 
     retrieved_chunks = [result["text"].strip() for result in results]
-    combined_context = "\n\n".join(retrieved_chunks)
+
+    try:
+        answer = generate_answer_with_deepseek(
+            question=question,
+            context_chunks=retrieved_chunks,
+        )
+    except RuntimeError as error:
+        raise HTTPException(status_code=500, detail=str(error)) from error
+    except Exception as error:
+        raise HTTPException(
+            status_code=502,
+            detail=f"DeepSeek answer generation failed: {error}",
+        ) from error
 
     sources = []
 
@@ -49,10 +62,7 @@ def ask_question(request: QuestionRequest) -> dict:
 
     return {
         "question": question,
-        "answer": (
-            "Based on the uploaded document, the most relevant information I "
-            f"found is: {combined_context}"
-        ),
+        "answer": answer,
         "source_count": len(sources),
         "sources": sources,
     }

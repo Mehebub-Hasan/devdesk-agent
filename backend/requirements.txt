@@ -4,3 +4,5 @@ python-multipart
 pydantic
 sentence-transformers
 numpy
+openai
+python-dotenv
