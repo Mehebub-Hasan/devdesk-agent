@@ -7,9 +7,13 @@ backend/venv/
 __pycache__/
 *.pyc
 
+# Log files
+*.log
+
 # Environment variables
 .env
 .env.local
+backend/.env
 
 # Temporary files
 uploads/
