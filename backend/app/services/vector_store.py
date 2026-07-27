@@ -79,12 +79,69 @@ class InMemoryVectorStore:
     def get_stats(self) -> dict[str, Any]:
         files = sorted({item["filename"] for item in self.metadata})
 
+        # Group chunks by doc_id so a UI can list each document and delete it by
+        # id. We keep insertion order (first time a doc_id is seen) so the list
+        # is stable across calls.
+        documents: dict[str, dict[str, Any]] = {}
+        for item in self.metadata:
+            doc_id = item["doc_id"]
+            if doc_id not in documents:
+                documents[doc_id] = {
+                    "doc_id": doc_id,
+                    "filename": item["filename"],
+                    "chunk_count": 0,
+                }
+            documents[doc_id]["chunk_count"] += 1
+
         return {
             "total_chunks": len(self.texts),
             "total_embeddings": len(self.embeddings),
             "total_files": len(files),
             "files": files,
+            "documents": list(documents.values()),
         }
+
+    def delete_document(self, doc_id: str) -> dict[str, Any]:
+        """
+        Remove one document's chunks (by doc_id) and persist.
+
+        Returns {"deleted_chunks": int, "filenames": [...]}. A count of 0 means
+        no chunk matched that doc_id — the caller turns that into a 404.
+
+        The tricky part is keeping texts / embeddings / metadata row-aligned. We
+        compute a single list of surviving row indices and rebuild all three
+        lists from it, so their ordering stays in lockstep after the removal.
+        """
+
+        keep = [
+            index
+            for index, meta in enumerate(self.metadata)
+            if meta.get("doc_id") != doc_id
+        ]
+        removed_count = len(self.metadata) - len(keep)
+
+        if removed_count == 0:
+            return {"deleted_chunks": 0, "filenames": []}
+
+        # Record the raw filenames tied to this doc_id before we drop the rows,
+        # so the caller can decide whether to delete the file from uploads/.
+        removed_filenames = sorted(
+            {
+                meta["filename"]
+                for meta in self.metadata
+                if meta.get("doc_id") == doc_id
+            }
+        )
+
+        # Rebuild each list from the SAME keep index set to preserve alignment.
+        self.texts = [self.texts[index] for index in keep]
+        self.embeddings = [self.embeddings[index] for index in keep]
+        self.metadata = [self.metadata[index] for index in keep]
+
+        # Persist through the existing atomic save (no second save path).
+        self.save()
+
+        return {"deleted_chunks": removed_count, "filenames": removed_filenames}
 
     def clear(self) -> dict[str, Any]:
         deleted_chunks = len(self.texts)
